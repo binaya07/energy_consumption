@@ -1,7 +1,8 @@
-data_path: D:\UNH\research\energy consumption\Energy_consumption_Prediction\Model_improved\sg_roads
-           
-use_loopup: True
+data_path: D:\UNH\research\energy consumption\energy_consumption (git)
+          
+use_lookup: False
 
+use_vehicle_info : False
 
 start_hour: 8
 
@@ -23,15 +24,15 @@ observe_p: 7   #in the day, we observe the 7 first values
 
 observe_t: 2
 
-test_ratio: 0.25
+test_ratio: 0.2
 
-model_name: RESNET_BILSTM
+model_name: VIT
 
-model_path: D:\UNH\research\energy consumption\Energy_consumption_Prediction\Model_improved
+model_path: D:\UNH\research\energy consumption\energy_consumption (git)
 
 use_cache_model: False
 
-epochs: 60
+epochs: 40
 
 batch_size: 1
 

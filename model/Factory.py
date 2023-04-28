@@ -3,7 +3,7 @@ from keras.layers import Input, Dense, Activation, Embedding, Flatten, Reshape, 
 from keras.layers import SimpleRNN, GRU, LSTM
 from keras.layers.convolutional import Conv2D, MaxPooling2D, Conv3D, MaxPooling3D
 from keras.layers import Add, Concatenate
-from keras.layers import LocallyConnected2D
+from keras.layers import LocallyConnected2D, LayerNormalization, MultiHeadAttention
 from keras.models import Model, Sequential
 from model.metrics import rmse, mape, mae, MyReshape, MyInverseReshape, get_model_save_path, matrixLayer, MyInverseReshape2, matrixLayer2
 from model.LookupConv import Lookup, LookUpSqueeze
@@ -12,24 +12,19 @@ import numpy as np
 from model.resnet_layer import resnet_layer
 from keras.backend import squeeze
 from keras.layers import Lambda
-
-
-# def resnet(input):
-#     output
-#
-#     return output
+from model.model_utils import vehicle_embedding_layer, Patches, PatchEncoder, transformer_layers, mlp
 
 class Factory(object):
+
     def get_model(self, conf, arm_shape):
         print("use model ", conf.model_name)
         model = conf.model_name
         function_name = "self.{}_model(conf, arm_shape)".format(conf.model_name)
-        exec(function_name)
-        return function_name
+        return eval(function_name)
 
     def RNN_model(self, conf, arm_shape):
         road_num = arm_shape[0]
-        input_x = Input((road_num, conf.observe_length, 1))
+        input_x = Input((road_num, conf.observe_length, 2))
         output = MyReshape(conf.batch_size)(input_x)
         # output = SimpleRNN(32, return_sequences=True)(output)
         output = SimpleRNN(conf.observe_length)(output)
@@ -71,14 +66,11 @@ class Factory(object):
         output = Dense(conf.predict_length)(output)
         output = MyInverseReshape(conf.batch_size)(output)
         model = Model(inputs=input_x, outputs=output)
-        return model
-
-    
+        return model 
 
     def DCNN_model(self, conf, arm_shape):
         road_num = arm_shape[0]
-        input_x = Input((road_num, conf.observe_length, 1))
-        input_ram = Input(arm_shape)
+        input_x = Input((road_num, conf.observe_length, 2))
         output = Conv2D(32, (5, 2), strides=(1, 1), padding="same")(input_x)
         output = Conv2D(32, (5, 2), strides=(1, 1), padding="same")(output)
         output = MaxPooling2D(pool_size=(1, 2))(output)
@@ -91,13 +83,13 @@ class Factory(object):
 
         output = Conv2D(1, (2, 2), strides=(1, 1), padding="same")(output)
         output = Conv2D(1, (2, 2), strides=(1, 1), padding="same")(output)
-        output = MaxPooling2D(pool_size=(1, 12))(output)
+        output = MaxPooling2D(pool_size=(1, 2))(output)
         output = Activation(activation="tanh")(output)
 
         output = Dense(conf.predict_length)(output)
         print('output.shape activation',output.shape)
         output = Reshape((road_num, conf.predict_length))(output)
-        inputs = [input_x, input_ram]
+        inputs = [input_x]
         model = Model(inputs=inputs, outputs=output)
         return model
 
@@ -590,11 +582,52 @@ class Factory(object):
             output = Activation('tanh')(output)
         else:
             output = Dense(1, activation='tanh')(to_lstm)
-            output = MyInverseReshape2(conf.batch_size)(output)
+            output = MyInverseReshape(conf.batch_size)(output)
            
         output = Dense(conf.predict_length, activation='tanh')(output)
         print('final layer', output.shape)
         model = Model(inputs=inputs, outputs=output)
+        return model
+
+    def VIT_model(self, conf, arm_shape):
+        road_num = arm_shape[0]
+        input_x = Input((road_num, conf.observe_length, 2))
+        
+        # Reshaping road segments as batch size 
+        # and we are only looking at last last two dimensions of data
+        reshaped_input_x = MyReshape(conf.batch_size)(input_x)
+        
+        # Currently the last two dimensions are of shape (.., .. , 12, 2)
+        # So they can be reshaped into patch_sizes as needed
+        # If patch_size is changed, num_patches should also be changed accordingly
+        # For example, if the patch_size is changed to 4, num_patches should be 12 * 2 / 4 = 6
+        patch_size = 2 
+        num_patches = int(reshaped_input_x.shape[-1] * reshaped_input_x.shape[-2] / patch_size)
+        
+        # Parameters - change to experiment
+        projection_dim = 12
+        num_transformer_layers = 2
+        num_heads = 2
+        transformer_units = [projection_dim * 2, projection_dim] 
+        mlp_head_units = [64, 32]
+
+        # Convert to patches
+        patches = tf.reshape(reshaped_input_x, [road_num, num_patches, patch_size])
+        # Encode patches.
+        encoded_patches = PatchEncoder(num_patches, projection_dim)(patches)
+        # Add transformer layers
+        t_layers = transformer_layers(encoded_patches, num_transformer_layers, num_heads, 
+                                      projection_dim, transformer_units)
+        # Normalize and flatten.
+        representation = LayerNormalization(epsilon=1e-6)(t_layers)
+        representation = Flatten()(representation)
+        # Add final MLP layer.
+        features = mlp(representation, hidden_units=mlp_head_units)
+        # Classify and reshape outputs.
+        output = Dense(conf.predict_length, activation='tanh')(features)
+        output = MyInverseReshape(conf.batch_size)(output)
+        # Create the Keras model.
+        model = Model(inputs=[input_x], outputs=output)
         return model
 
 factory = Factory()

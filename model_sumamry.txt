@@ -2,204 +2,69 @@ Model: "model"
 __________________________________________________________________________________________________
  Layer (type)                   Output Shape         Param #     Connected to                     
 ==================================================================================================
- input_3 (InputLayer)           [(None, 955, 12, 1)  0           []                               
-                                ]                                                                 
-                                                                                                  
- input_4 (InputLayer)           [(None, 955, 12, 1)  0           []                               
-                                ]                                                                 
-                                                                                                  
- input_5 (InputLayer)           [(None, 955, 12, 1)  0           []                               
-                                ]                                                                 
-                                                                                                  
- embedding (Embedding)          (None, 955, 12, 1,   15          ['input_3[0][0]']                
-                                3)                                                                
-                                                                                                  
- embedding_1 (Embedding)        (None, 955, 12, 1,   630         ['input_4[0][0]']                
-                                10)                                                               
-                                                                                                  
- embedding_2 (Embedding)        (None, 955, 12, 1,   50          ['input_5[0][0]']                
-                                5)                                                                
-                                                                                                  
  input_1 (InputLayer)           [(None, 955, 12, 2)  0           []                               
                                 ]                                                                 
                                                                                                   
- lambda (Lambda)                multiple             0           ['embedding[0][0]',              
-                                                                  'embedding_1[0][0]',            
-                                                                  'embedding_2[0][0]']            
+ my_reshape (MyReshape)         (955, 12, 2)         0           ['input_1[0][0]']                
                                                                                                   
- concatenate (Concatenate)      (None, 955, 12, 20)  0           ['input_1[0][0]',                
-                                                                  'lambda[0][0]',                 
-                                                                  'lambda[1][0]',                 
-                                                                  'lambda[2][0]']                 
+ tf.reshape (TFOpLambda)        (955, 12, 2)         0           ['my_reshape[0][0]']             
                                                                                                   
- input_2 (InputLayer)           [(None, 955, 5)]     0           []                               
+ patch_encoder (PatchEncoder)   (955, 12, 12)        180         ['tf.reshape[0][0]']             
                                                                                                   
- lookup (Lookup)                (1, 955, 5, 12, 20)  0           ['concatenate[0][0]',            
-                                                                  'input_2[0][0]']                
-                                                                                                  
- conv3d (Conv3D)                (1, 955, 1, 11, 8)   1608        ['lookup[0][0]']                 
-                                                                                                  
- batch_normalization (BatchNorm  (1, 955, 1, 11, 8)  32          ['conv3d[0][0]']                 
+ layer_normalization (LayerNorm  (955, 12, 12)       24          ['patch_encoder[0][0]']          
  alization)                                                                                       
                                                                                                   
- look_up_squeeze (LookUpSqueeze  (1, 955, 11, 8)     0           ['batch_normalization[0][0]']    
- )                                                                                                
+ multi_head_attention (MultiHea  (955, 12, 12)       1236        ['layer_normalization[0][0]',    
+ dAttention)                                                      'layer_normalization[0][0]']    
                                                                                                   
- lookup_1 (Lookup)              (1, 955, 5, 11, 8)   0           ['look_up_squeeze[0][0]',        
-                                                                  'input_2[0][0]']                
+ add (Add)                      (955, 12, 12)        0           ['multi_head_attention[0][0]',   
+                                                                  'patch_encoder[0][0]']          
                                                                                                   
- conv3d_1 (Conv3D)              (1, 955, 1, 10, 8)   648         ['lookup_1[0][0]']               
-                                                                                                  
- batch_normalization_1 (BatchNo  (1, 955, 1, 10, 8)  32          ['conv3d_1[0][0]']               
+ layer_normalization_1 (LayerNo  (955, 12, 12)       24          ['add[0][0]']                    
  rmalization)                                                                                     
                                                                                                   
- look_up_squeeze_1 (LookUpSquee  (1, 955, 10, 8)     0           ['batch_normalization_1[0][0]']  
- ze)                                                                                              
+ dense_1 (Dense)                (955, 12, 24)        312         ['layer_normalization_1[0][0]']  
                                                                                                   
- lookup_3 (Lookup)              (1, 955, 5, 12, 20)  0           ['concatenate[0][0]',            
-                                                                  'input_2[0][0]']                
+ dense_2 (Dense)                (955, 12, 12)        300         ['dense_1[0][0]']                
                                                                                                   
- lookup_2 (Lookup)              (1, 955, 5, 10, 8)   0           ['look_up_squeeze_1[0][0]',      
-                                                                  'input_2[0][0]']                
+ add_1 (Add)                    (955, 12, 12)        0           ['dense_2[0][0]',                
+                                                                  'add[0][0]']                    
                                                                                                   
- conv3d_3 (Conv3D)              (1, 955, 1, 9, 8)    3208        ['lookup_3[0][0]']               
-                                                                                                  
- conv3d_2 (Conv3D)              (1, 955, 1, 9, 8)    648         ['lookup_2[0][0]']               
-                                                                                                  
- batch_normalization_3 (BatchNo  (1, 955, 1, 9, 8)   32          ['conv3d_3[0][0]']               
+ layer_normalization_2 (LayerNo  (955, 12, 12)       24          ['add_1[0][0]']                  
  rmalization)                                                                                     
                                                                                                   
- batch_normalization_2 (BatchNo  (1, 955, 1, 9, 8)   32          ['conv3d_2[0][0]']               
+ multi_head_attention_1 (MultiH  (955, 12, 12)       1236        ['layer_normalization_2[0][0]',  
+ eadAttention)                                                    'layer_normalization_2[0][0]']  
+                                                                                                  
+ add_2 (Add)                    (955, 12, 12)        0           ['multi_head_attention_1[0][0]', 
+                                                                  'add_1[0][0]']                  
+                                                                                                  
+ layer_normalization_3 (LayerNo  (955, 12, 12)       24          ['add_2[0][0]']                  
  rmalization)                                                                                     
                                                                                                   
- look_up_squeeze_3 (LookUpSquee  (1, 955, 9, 8)      0           ['batch_normalization_3[0][0]']  
- ze)                                                                                              
+ dense_3 (Dense)                (955, 12, 24)        312         ['layer_normalization_3[0][0]']  
                                                                                                   
- look_up_squeeze_2 (LookUpSquee  (1, 955, 9, 8)      0           ['batch_normalization_2[0][0]']  
- ze)                                                                                              
+ dense_4 (Dense)                (955, 12, 12)        300         ['dense_3[0][0]']                
                                                                                                   
- add (Add)                      (1, 955, 9, 8)       0           ['look_up_squeeze_3[0][0]',      
-                                                                  'look_up_squeeze_2[0][0]']      
+ add_3 (Add)                    (955, 12, 12)        0           ['dense_4[0][0]',                
+                                                                  'add_2[0][0]']                  
                                                                                                   
- activation (Activation)        (1, 955, 9, 8)       0           ['add[0][0]']                    
-                                                                                                  
- lookup_4 (Lookup)              (1, 955, 5, 9, 8)    0           ['activation[0][0]',             
-                                                                  'input_2[0][0]']                
-                                                                                                  
- conv3d_4 (Conv3D)              (1, 955, 1, 8, 16)   1296        ['lookup_4[0][0]']               
-                                                                                                  
- batch_normalization_4 (BatchNo  (1, 955, 1, 8, 16)  64          ['conv3d_4[0][0]']               
+ layer_normalization_4 (LayerNo  (955, 12, 12)       24          ['add_3[0][0]']                  
  rmalization)                                                                                     
                                                                                                   
- look_up_squeeze_4 (LookUpSquee  (1, 955, 8, 16)     0           ['batch_normalization_4[0][0]']  
- ze)                                                                                              
+ flatten (Flatten)              (955, 144)           0           ['layer_normalization_4[0][0]']  
                                                                                                   
- lookup_5 (Lookup)              (1, 955, 5, 8, 16)   0           ['look_up_squeeze_4[0][0]',      
-                                                                  'input_2[0][0]']                
+ dense_5 (Dense)                (955, 64)            9280        ['flatten[0][0]']                
                                                                                                   
- conv3d_5 (Conv3D)              (1, 955, 1, 7, 16)   2576        ['lookup_5[0][0]']               
+ dense_6 (Dense)                (955, 32)            2080        ['dense_5[0][0]']                
                                                                                                   
- batch_normalization_5 (BatchNo  (1, 955, 1, 7, 16)  64          ['conv3d_5[0][0]']               
- rmalization)                                                                                     
+ dense_7 (Dense)                (955, 1)             33          ['dense_6[0][0]']                
                                                                                                   
- look_up_squeeze_5 (LookUpSquee  (1, 955, 7, 16)     0           ['batch_normalization_5[0][0]']  
- ze)                                                                                              
-                                                                                                  
- lookup_7 (Lookup)              (1, 955, 5, 9, 8)    0           ['activation[0][0]',             
-                                                                  'input_2[0][0]']                
-                                                                                                  
- lookup_6 (Lookup)              (1, 955, 5, 7, 16)   0           ['look_up_squeeze_5[0][0]',      
-                                                                  'input_2[0][0]']                
-                                                                                                  
- conv3d_7 (Conv3D)              (1, 955, 1, 6, 16)   2576        ['lookup_7[0][0]']               
-                                                                                                  
- conv3d_6 (Conv3D)              (1, 955, 1, 6, 16)   2576        ['lookup_6[0][0]']               
-                                                                                                  
- batch_normalization_7 (BatchNo  (1, 955, 1, 6, 16)  64          ['conv3d_7[0][0]']               
- rmalization)                                                                                     
-                                                                                                  
- batch_normalization_6 (BatchNo  (1, 955, 1, 6, 16)  64          ['conv3d_6[0][0]']               
- rmalization)                                                                                     
-                                                                                                  
- look_up_squeeze_7 (LookUpSquee  (1, 955, 6, 16)     0           ['batch_normalization_7[0][0]']  
- ze)                                                                                              
-                                                                                                  
- look_up_squeeze_6 (LookUpSquee  (1, 955, 6, 16)     0           ['batch_normalization_6[0][0]']  
- ze)                                                                                              
-                                                                                                  
- add_1 (Add)                    (1, 955, 6, 16)      0           ['look_up_squeeze_7[0][0]',      
-                                                                  'look_up_squeeze_6[0][0]']      
-                                                                                                  
- activation_1 (Activation)      (1, 955, 6, 16)      0           ['add_1[0][0]']                  
-                                                                                                  
- lookup_8 (Lookup)              (1, 955, 5, 6, 16)   0           ['activation_1[0][0]',           
-                                                                  'input_2[0][0]']                
-                                                                                                  
- conv3d_8 (Conv3D)              (1, 955, 1, 5, 16)   2576        ['lookup_8[0][0]']               
-                                                                                                  
- batch_normalization_8 (BatchNo  (1, 955, 1, 5, 16)  64          ['conv3d_8[0][0]']               
- rmalization)                                                                                     
-                                                                                                  
- look_up_squeeze_8 (LookUpSquee  (1, 955, 5, 16)     0           ['batch_normalization_8[0][0]']  
- ze)                                                                                              
-                                                                                                  
- lookup_9 (Lookup)              (1, 955, 5, 5, 16)   0           ['look_up_squeeze_8[0][0]',      
-                                                                  'input_2[0][0]']                
-                                                                                                  
- conv3d_9 (Conv3D)              (1, 955, 1, 4, 16)   2576        ['lookup_9[0][0]']               
-                                                                                                  
- batch_normalization_9 (BatchNo  (1, 955, 1, 4, 16)  64          ['conv3d_9[0][0]']               
- rmalization)                                                                                     
-                                                                                                  
- look_up_squeeze_9 (LookUpSquee  (1, 955, 4, 16)     0           ['batch_normalization_9[0][0]']  
- ze)                                                                                              
-                                                                                                  
- lookup_11 (Lookup)             (1, 955, 5, 6, 16)   0           ['activation_1[0][0]',           
-                                                                  'input_2[0][0]']                
-                                                                                                  
- lookup_10 (Lookup)             (1, 955, 5, 4, 16)   0           ['look_up_squeeze_9[0][0]',      
-                                                                  'input_2[0][0]']                
-                                                                                                  
- conv3d_11 (Conv3D)             (1, 955, 1, 3, 16)   5136        ['lookup_11[0][0]']              
-                                                                                                  
- conv3d_10 (Conv3D)             (1, 955, 1, 3, 16)   2576        ['lookup_10[0][0]']              
-                                                                                                  
- batch_normalization_11 (BatchN  (1, 955, 1, 3, 16)  64          ['conv3d_11[0][0]']              
- ormalization)                                                                                    
-                                                                                                  
- batch_normalization_10 (BatchN  (1, 955, 1, 3, 16)  64          ['conv3d_10[0][0]']              
- ormalization)                                                                                    
-                                                                                                  
- look_up_squeeze_11 (LookUpSque  (1, 955, 3, 16)     0           ['batch_normalization_11[0][0]'] 
- eze)                                                                                             
-                                                                                                  
- look_up_squeeze_10 (LookUpSque  (1, 955, 3, 16)     0           ['batch_normalization_10[0][0]'] 
- eze)                                                                                             
-                                                                                                  
- add_2 (Add)                    (1, 955, 3, 16)      0           ['look_up_squeeze_11[0][0]',     
-                                                                  'look_up_squeeze_10[0][0]']     
-                                                                                                  
- activation_2 (Activation)      (1, 955, 3, 16)      0           ['add_2[0][0]']                  
-                                                                                                  
- lookup_12 (Lookup)             (1, 955, 5, 3, 16)   0           ['activation_2[0][0]',           
-                                                                  'input_2[0][0]']                
-                                                                                                  
- conv3d_12 (Conv3D)             (1, 955, 1, 3, 8)    648         ['lookup_12[0][0]']              
-                                                                                                  
- look_up_squeeze_12 (LookUpSque  (1, 955, 3, 8)      0           ['conv3d_12[0][0]']              
- eze)                                                                                             
-                                                                                                  
- lambda_1 (Lambda)              (955, 3, 8)          0           ['look_up_squeeze_12[0][0]']     
-                                                                                                  
- dense (Dense)                  (955, 3, 1)          9           ['lambda_1[0][0]']               
-                                                                                                  
- my_inverse_reshape2 (MyInverse  (1, 954, 3)         0           ['dense[0][0]']                  
- Reshape2)                                                                                        
-                                                                                                  
- dense_1 (Dense)                (1, 954, 1)          4           ['my_inverse_reshape2[0][0]']    
+ my_inverse_reshape (MyInverseR  (1, 955, 1)         0           ['dense_7[0][0]']                
+ eshape)                                                                                          
                                                                                                   
 ==================================================================================================
-Total params: 29,996
-Trainable params: 29,676
-Non-trainable params: 320
+Total params: 15,389
+Trainable params: 15,389
+Non-trainable params: 0
 __________________________________________________________________________________________________
