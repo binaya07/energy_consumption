@@ -5,6 +5,7 @@ from keras.optimizers import SGD, Adam, Adadelta, Nadam, RMSprop
 import os
 import pandas as pd
 import numpy as np
+import csv
 
 import time
 
@@ -140,9 +141,12 @@ def main():
     print(y_true.shape)
     # print(y_true)
 
-    print("RMSE:", rmse(predict, y_true))
-    print("MAE:", mae(predict, y_true))
-    print("MAPE:", mape(predict, y_true))
+    v_rmse = rmse(predict, y_true)
+    v_mae = mae(predict, y_true)
+    v_mape = mape(predict, y_true)
+    print("RMSE:", v_rmse)
+    print("MAE:", v_mae)
+    print("MAPE:", v_mape)
 
     with open('predicted.csv', 'w') as outfile:
         for data_slice in predict:
@@ -153,6 +157,9 @@ def main():
         for data_slice in y_true:
             outfile.write('# New slice\n')
             np.savetxt(outfile, data_slice)
+    
+    # df = pd.DataFrame({'Model': [conf.model_name], 'RMSE': [v_rmse], 'MAE': [v_mae], 'MAPE': [v_mape]})
+    # df.to_csv('performance_metrics.csv', mode='a', float_format = '%.4f', index=False, header=False)
 
     '''Acc = abs(predict - y_true)
     print('Acc Shape', Acc.shape)
