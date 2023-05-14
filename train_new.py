@@ -1,4 +1,3 @@
-
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.optimizers import SGD, Adam, Adadelta, Nadam, RMSprop
 
@@ -19,11 +18,14 @@ import tensorflow as tf
 from config import Config
 
 from keras.callbacks import TensorBoard
-
+from keras.utils import set_random_seed
 
 def main():
     ## Read config file
     conf = Config("config_fig.yaml")
+
+    # Setting random seed to 0
+    set_random_seed(0)
 
     tensorboard = TensorBoard(log_dir="logs/{}".format(conf.model_name))
 
