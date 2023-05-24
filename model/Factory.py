@@ -630,6 +630,9 @@ class Factory(object):
         model = Model(inputs=[input_x], outputs=output)
         return model
 
+    def CVT(self, conf, arm_shape):
+        pass
+
 factory = Factory()
 
 

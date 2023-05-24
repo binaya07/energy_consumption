@@ -1,70 +1,20 @@
 Model: "model"
-__________________________________________________________________________________________________
- Layer (type)                   Output Shape         Param #     Connected to                     
-==================================================================================================
- input_1 (InputLayer)           [(None, 955, 12, 2)  0           []                               
-                                ]                                                                 
-                                                                                                  
- my_reshape (MyReshape)         (955, 12, 2)         0           ['input_1[0][0]']                
-                                                                                                  
- tf.reshape (TFOpLambda)        (955, 12, 2)         0           ['my_reshape[0][0]']             
-                                                                                                  
- patch_encoder (PatchEncoder)   (955, 12, 12)        180         ['tf.reshape[0][0]']             
-                                                                                                  
- layer_normalization (LayerNorm  (955, 12, 12)       24          ['patch_encoder[0][0]']          
- alization)                                                                                       
-                                                                                                  
- multi_head_attention (MultiHea  (955, 12, 12)       1236        ['layer_normalization[0][0]',    
- dAttention)                                                      'layer_normalization[0][0]']    
-                                                                                                  
- add (Add)                      (955, 12, 12)        0           ['multi_head_attention[0][0]',   
-                                                                  'patch_encoder[0][0]']          
-                                                                                                  
- layer_normalization_1 (LayerNo  (955, 12, 12)       24          ['add[0][0]']                    
- rmalization)                                                                                     
-                                                                                                  
- dense_1 (Dense)                (955, 12, 24)        312         ['layer_normalization_1[0][0]']  
-                                                                                                  
- dense_2 (Dense)                (955, 12, 12)        300         ['dense_1[0][0]']                
-                                                                                                  
- add_1 (Add)                    (955, 12, 12)        0           ['dense_2[0][0]',                
-                                                                  'add[0][0]']                    
-                                                                                                  
- layer_normalization_2 (LayerNo  (955, 12, 12)       24          ['add_1[0][0]']                  
- rmalization)                                                                                     
-                                                                                                  
- multi_head_attention_1 (MultiH  (955, 12, 12)       1236        ['layer_normalization_2[0][0]',  
- eadAttention)                                                    'layer_normalization_2[0][0]']  
-                                                                                                  
- add_2 (Add)                    (955, 12, 12)        0           ['multi_head_attention_1[0][0]', 
-                                                                  'add_1[0][0]']                  
-                                                                                                  
- layer_normalization_3 (LayerNo  (955, 12, 12)       24          ['add_2[0][0]']                  
- rmalization)                                                                                     
-                                                                                                  
- dense_3 (Dense)                (955, 12, 24)        312         ['layer_normalization_3[0][0]']  
-                                                                                                  
- dense_4 (Dense)                (955, 12, 12)        300         ['dense_3[0][0]']                
-                                                                                                  
- add_3 (Add)                    (955, 12, 12)        0           ['dense_4[0][0]',                
-                                                                  'add_2[0][0]']                  
-                                                                                                  
- layer_normalization_4 (LayerNo  (955, 12, 12)       24          ['add_3[0][0]']                  
- rmalization)                                                                                     
-                                                                                                  
- flatten (Flatten)              (955, 144)           0           ['layer_normalization_4[0][0]']  
-                                                                                                  
- dense_5 (Dense)                (955, 64)            9280        ['flatten[0][0]']                
-                                                                                                  
- dense_6 (Dense)                (955, 32)            2080        ['dense_5[0][0]']                
-                                                                                                  
- dense_7 (Dense)                (955, 1)             33          ['dense_6[0][0]']                
-                                                                                                  
- my_inverse_reshape (MyInverseR  (1, 955, 1)         0           ['dense_7[0][0]']                
- eshape)                                                                                          
-                                                                                                  
-==================================================================================================
-Total params: 15,389
-Trainable params: 15,389
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ input_1 (InputLayer)        [(None, 955, 12, 2)]      0         
+                                                                 
+ my_reshape (MyReshape)      (955, 12, 2)              0         
+                                                                 
+ simple_rnn (SimpleRNN)      (955, 12)                 180       
+                                                                 
+ dense (Dense)               (955, 1)                  13        
+                                                                 
+ my_inverse_reshape (MyInver  (1, 955, 1)              0         
+ seReshape)                                                      
+                                                                 
+=================================================================
+Total params: 193
+Trainable params: 193
 Non-trainable params: 0
-__________________________________________________________________________________________________
+_________________________________________________________________

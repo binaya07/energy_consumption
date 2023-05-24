@@ -10,7 +10,9 @@ Deep learning model to predict vehicle energy consumption in various road segmen
 
 3. Check `model_name` in `config_fig.yaml` for the model to run. And also change `use_lookup` and `use_vehicle_info` parameters according to the model.
 
-4. Run `python train_new.py`
+4. Run `python train_new.py` 
+
+5. Run `python train_pytorch.py` to run CVT.
 
 ### For example: 
 
