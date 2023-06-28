@@ -1,6 +1,7 @@
 from config import Config
 from model.pytorch_models.cnn import CNN
 from model.pytorch_models.cvt import ConvolutionalVisionTransformer, QuickGELU, LayerNorm
+from model.pytorch_models.rvt import ResidualVisionTransformer
 from __init__ import get_train_test_data
 import torch
 from torch import nn
@@ -71,8 +72,18 @@ if conf.use_externel:
 # Instantiate the model with hyperparameters
 # model = CNN()
 # print(conf.cvt_spec['NUM_STAGES'])
-
-model = ConvolutionalVisionTransformer(
+model = None
+if conf.model_name == 'CVT':
+    model = ConvolutionalVisionTransformer(
+        in_chans=1,
+        num_classes=1,
+        act_layer=QuickGELU,
+        norm_layer=partial(LayerNorm, eps=1e-5),
+        spec=conf.cvt_spec
+    )
+else:
+    print("using RVT")
+    model = ResidualVisionTransformer(
         in_chans=1,
         num_classes=1,
         act_layer=QuickGELU,

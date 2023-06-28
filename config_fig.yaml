@@ -26,7 +26,7 @@ observe_t: 2
 
 test_ratio: 0.2
 
-model_name: RNN
+model_name: RVT
 
 model_path: D:\UNH\research\energy consumption\energy_consumption (git)
 
@@ -45,8 +45,8 @@ cvt_spec:
   PATCH_SIZE: [6]
   PATCH_STRIDE: [4]
   PATCH_PADDING: [2]
-  DIM_EMBED: [64]
-  NUM_HEADS: [1]
+  DIM_EMBED: [120]
+  NUM_HEADS: [3]
   DEPTH: [1]
   MLP_RATIO: [4.0]
   ATTN_DROP_RATE: [0.0]
