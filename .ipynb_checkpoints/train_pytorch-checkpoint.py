@@ -1,7 +1,7 @@
 from config import Config
 from model.pytorch_models.cnn import CNN
 from model.pytorch_models.cvt import ConvolutionalVisionTransformer, QuickGELU, LayerNorm
-from model.pytorch_models.rvt import ResidualVisionTransformer, DeepFEC_v2_vehicle_config_model
+from model.pytorch_models.rvt import ResidualVisionTransformer
 from __init__ import get_train_test_data
 import torch
 from torch import nn
@@ -44,8 +44,8 @@ print(train_vehicle_type.shape, train_engine_config.shape, train_gen_weight.shap
 #     train_xs = [train_xs, train_arms]
 #     test_xs = [test_xs, test_arms]
 if conf.use_vehicle_info:
-    train_xs = np.concatenate((train_xs, train_vehicle_type, train_engine_config, train_gen_weight), axis = 3)
-    test_xs = np.concatenate((test_xs, test_vehicle_type, test_engine_config, test_gen_weight), axis = 3)
+    train_xs = [train_xs, train_vehicle_type, train_engine_config, train_gen_weight]
+    test_xs = [test_xs, test_vehicle_type, test_engine_config, test_gen_weight]
 
 if conf.use_externel:
     if conf.observe_p != 0:
@@ -68,8 +68,6 @@ if conf.use_externel:
         train_xs += [train_xe]
         test_xs += [test_xe]
 
-# print(train_xs[:,:,:,3:4])
-# exit()
 ## MODEL
 # Instantiate the model with hyperparameters
 # model = CNN()
@@ -84,8 +82,8 @@ if conf.model_name == 'CVT':
         spec=conf.cvt_spec
     )
 else:
-    print("using DeepFEC_v2_vehicle_config_model")
-    model = DeepFEC_v2_vehicle_config_model(
+    print("using RVT")
+    model = ResidualVisionTransformer(
         in_chans=1,
         num_classes=1,
         act_layer=QuickGELU,
@@ -104,9 +102,11 @@ lr=0.01
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
-# summary(model, (1, 12, 2))
+print(train_xs.size())
+print("reached here")
+summary(model, (1, 12, 2))
 
-# exit()
+exit()
 # print('== model_stats by tensorwatch ==')
 # df = tw.model_stats(
 #     model,
@@ -130,6 +130,7 @@ for epoch in range(n_epochs + 1):  # loop over the dataset multiple times
         # get the inputs; data is a list of [inputs, labels]
         inputs = torch.from_numpy(train_xs[i]).float()
         values = torch.from_numpy(train_ys[i]).float()
+
         # zero the parameter gradients
         optimizer.zero_grad()
 

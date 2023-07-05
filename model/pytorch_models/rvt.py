@@ -670,6 +670,51 @@ class ResidualVisionTransformer(nn.Module):
 
         return x
 
+class DeepFEC_v2_vehicle_config_model(nn.Module):
+
+    def __init__(self, in_chans=3,
+                 num_classes=10,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm,
+                 init='trunc_norm',
+                 spec=None):
+        super().__init__()
+        self.num_classes = num_classes
+        self.rvt  = ResidualVisionTransformer(in_chans, num_classes, act_layer, 
+                                         norm_layer, init, spec)
+        self.veh_type_embed = nn.Embedding(5, 3)
+        self.engine_embed = nn.Embedding(63, 10)
+        self.weight_embed = nn.Embedding(10, 5)
+    
+        self.cat1 = nn.Linear(216, 50)
+        self.cat2 = nn.Linear(50, 1)
+        self.out = nn.Linear(2, 1)
+
+    def forward(self, x):
+        num_data = x[:,:,:2]
+        x1 = self.rvt(num_data)
+
+        input_veh_type = x[:, :, 2].int()        
+        x2 = self.veh_type_embed(input_veh_type)
+        x2 = x2.view(955, -1)
+
+        input_engine = x[:, :, 3].int()        
+        x3 = self.engine_embed(input_engine)
+        x3 = x3.view(955, -1)
+
+        input_weight = x[:, :, 4].int()        
+        x4 = self.weight_embed(input_weight)
+        x4 = x4.view(955, -1)
+
+        cat_data = torch.cat((x2, x3, x4), dim=-1)
+        x5 = self.cat1(cat_data)
+        x7 = self.cat2(x5)
+        
+        all_data = torch.cat((x1, x7), dim=-1)
+        # rvt_data = torch.cat((num_data, x2, x3, x4))
+        # x = self.rvt(rvt_data)
+        x = self.out(all_data) 
+        return x
 
 # @register_model
 # def get_cls_model(config, **kwargs):
