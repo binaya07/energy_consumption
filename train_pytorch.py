@@ -1,7 +1,7 @@
 from config import Config
 from model.pytorch_models.cnn import CNN
 from model.pytorch_models.cvt import ConvolutionalVisionTransformer, QuickGELU, LayerNorm
-from model.pytorch_models.rvt import ResidualVisionTransformer, DeepFEC_v2_vehicle_config_model
+from model.pytorch_models.rvt import ResidualVisionTransformer, DeepFEC_v2_vehicle_config_model, DeepFEC_v2_vehicle_config_model_2
 from __init__ import get_train_test_data
 import torch
 from torch import nn
@@ -40,33 +40,14 @@ print('train_xs:', train_xs.shape,  'test_xs:', test_xs.shape, 'train_xp:', trai
       test_xp.shape, 'test_xe:', test_xe.shape, 'train_ys:', train_ys.shape, 'test_ys:', test_ys.shape)
 print(train_vehicle_type.shape, train_engine_config.shape, train_gen_weight.shape)
 
-# if conf.use_lookup:
-#     train_xs = [train_xs, train_arms]
-#     test_xs = [test_xs, test_arms]
 if conf.use_vehicle_info:
     train_xs = np.concatenate((train_xs, train_vehicle_type, train_engine_config, train_gen_weight), axis = 3)
     test_xs = np.concatenate((test_xs, test_vehicle_type, test_engine_config, test_gen_weight), axis = 3)
 
-if conf.use_externel:
-    if conf.observe_p != 0:
-        if isinstance(train_xs, list):
-            train_xs += [train_xp]
-            test_xs += [test_xp]
-        else:
-            train_xs = [train_xs, train_xp]
-            test_xs = [test_xs, test_xp]
-
-    if conf.observe_t != 0:
-        if isinstance(train_xs, list):
-            train_xs += [train_xt]
-            test_xs += [test_xt]
-        else:
-            train_xs = [train_xs, train_xt]
-            test_xs = [test_xs, test_xt]
-
-    if conf.observe_p != 0 or conf.observe_t != 0:
-        train_xs += [train_xe]
-        test_xs += [test_xe]
+## USE HOLIDAY INFO (train_xe)
+# Repeat the last part along axis=1 to match a shape of (23, 955, 22)
+train_xe = np.tile(train_xe[:, -1:], (1, 955, 1))
+test_xe = np.tile(test_xe[:, -1:], (1, 955, 1))
 
 # print(train_xs[:,:,:,3:4])
 # exit()
@@ -85,7 +66,7 @@ if conf.model_name == 'CVT':
     )
 else:
     print("using DeepFEC_v2_vehicle_config_model")
-    model = DeepFEC_v2_vehicle_config_model(
+    model = DeepFEC_v2_vehicle_config_model_2(
         in_chans=1,
         num_classes=1,
         act_layer=QuickGELU,
@@ -104,13 +85,14 @@ lr=0.01
 criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
-# summary(model, (1, 12, 2))
+# summary(model, (12, 5), 955)
+# exit()
 
 # exit()
 # print('== model_stats by tensorwatch ==')
 # df = tw.model_stats(
 #     model,
-#     (1, 1, 12, 2)
+#     (23, 955, 12, 5)
 # )
 # df.to_html(os.path.join('pytorch_model_summary', 'model_summary.html'))
 # df.to_csv(os.path.join('pytorch_model_summary', 'model_summary.csv'))
@@ -129,13 +111,14 @@ for epoch in range(n_epochs + 1):  # loop over the dataset multiple times
     for i in range(train_xs.shape[0]):
         # get the inputs; data is a list of [inputs, labels]
         inputs = torch.from_numpy(train_xs[i]).float()
+        holiday_inputs = torch.from_numpy(train_xe[i]).float()
         values = torch.from_numpy(train_ys[i]).float()
         # zero the parameter gradients
         optimizer.zero_grad()
 
         # forward + backward + optimize
         # print("input :" , inputs.shape)
-        outputs = model(inputs)
+        outputs = model(inputs, holiday_inputs)
 
         loss = criterion(outputs, values)
         loss.backward()
@@ -153,8 +136,9 @@ np_predicted = np.array([])
 with torch.no_grad():
     for j in range(test_xs.shape[0]):
         t_inputs = torch.from_numpy(test_xs[j]).float()
+        h_inputs = torch.from_numpy(test_xe[j]).float()
         t_values = torch.from_numpy(test_ys[j]).float()
-        predicted = model(t_inputs)
+        predicted = model(t_inputs, h_inputs)
 
         np_values = np.append(np_values, t_values.numpy())
         np_predicted = np.append(np_predicted, predicted.numpy())
