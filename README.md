@@ -12,19 +12,35 @@ Deep learning model to predict vehicle energy consumption in various road segmen
 
 4. Run `python train_new.py` 
 
-5. Run `python train_pytorch.py` to run CVT.
+5. Run `python train_pytorch.py` to run CVT or RVT.
 
 ### For example: 
 
 ### To run RNN:
 ```
+Config example -
 model_name: RNN
 use_lookup: False
 use_vehicle_info: False
+
+Run - python train_new.py
 ```
 ### To run RESNET_BILSTN:
 ```
+Config example -
 model_name: RESNET_BILSTM
 use_lookup: True
 use_vehicle_info: True
+
+Run - python train_new.py
+```
+
+### To run RVT:
+```
+Config example -
+model_name: RVT
+use_lookup: False
+use_vehicle_info: True
+
+Run - python train_pytorch.py
 ```
