@@ -50,7 +50,7 @@ class Factory(object):
 
     def GRU_model(self, conf, arm_shape):
         road_num = arm_shape[0]
-        input_x = Input((road_num, conf.observe_length, 1))
+        input_x = Input((road_num, conf.observe_length, 2))
         output = MyReshape(conf.batch_size)(input_x)
         output = GRU(conf.observe_length)(output)
         output = Dense(conf.predict_length)(output)
@@ -60,7 +60,7 @@ class Factory(object):
 
     def LSTM_model(self, conf, arm_shape):
         road_num = arm_shape[0]
-        input_x = Input((road_num, conf.observe_length, 1))
+        input_x = Input((road_num, conf.observe_length, 2))
         output = MyReshape(conf.batch_size)(input_x)
         output = LSTM(conf.observe_length)(output)
         output = Dense(conf.predict_length)(output)
@@ -118,7 +118,7 @@ class Factory(object):
     def LCRNN_model(self, conf, arm_shape):
         road_num = arm_shape[0]
         A = arm_shape[1]
-        input_x = Input((road_num, conf.observe_length, 1))
+        input_x = Input((road_num, conf.observe_length, 2))
         input_ram = Input(arm_shape)
         output = Lookup(conf.batch_size)([input_x, input_ram])
         output = Conv3D(16, (1, A, 2), activation="relu")(output)
@@ -315,7 +315,7 @@ class Factory(object):
         road_num = arm_shape[0]
         A = arm_shape[1]
         
-        input_x = Input((road_num, conf.observe_length, 1))
+        input_x = Input((road_num, conf.observe_length, 2))
         print('inpu+++++++++++++++++++++++++++++', input_x.shape)
         input_ram = Input(arm_shape)
         print('input_x.shape', input_x.shape)

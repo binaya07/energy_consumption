@@ -1,8 +1,8 @@
 data_path: D:\UNH\research\energy consumption\energy_consumption (git)
           
-use_lookup: False
+use_lookup: True
 
-use_vehicle_info : True
+use_vehicle_info : False
 
 start_hour: 8
 
@@ -26,7 +26,7 @@ observe_t: 2
 
 test_ratio: 0.2
 
-model_name: RVT
+model_name: LCRNN
 
 model_path: D:\UNH\research\energy consumption\energy_consumption (git)
 

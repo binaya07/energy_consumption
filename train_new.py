@@ -109,9 +109,9 @@ def main():
         if conf.use_externel:
             train_ys = train_ys[:, :-1, :]
             test_ys = test_ys[:, :-1, :]
-        # else:
-        #     train_ys = train_ys[:, :-1, :]
-        #     test_ys = test_ys[:, :-1, :]
+        else:
+            train_ys = train_ys[:, :-1, :]
+            test_ys = test_ys[:, :-1, :]
 
         print('train ys', test_ys.shape)
         history = model.fit(train_xs,
