@@ -49,6 +49,13 @@ if conf.use_vehicle_info:
 train_xe = np.tile(train_xe[:, -1:], (1, 955, 1))
 test_xe = np.tile(test_xe[:, -1:], (1, 955, 1))
 
+# print(train_xp.shape, train_xe.shape, train_xs.shape)
+# print(train_xp[0][15])
+# exit()
+
+# print(train_arms[0])
+# exit()
+
 # print(train_xs[:,:,:,3:4])
 # exit()
 ## MODEL
@@ -111,14 +118,15 @@ for epoch in range(n_epochs + 1):  # loop over the dataset multiple times
     for i in range(train_xs.shape[0]):
         # get the inputs; data is a list of [inputs, labels]
         inputs = torch.from_numpy(train_xs[i]).float()
-        holiday_inputs = torch.from_numpy(train_xe[i]).float()
+        # holiday_inputs = torch.from_numpy(train_xe[i]).float()
+        periodicity_inputs = torch.from_numpy(train_xp[i]).float()
         values = torch.from_numpy(train_ys[i]).float()
         # zero the parameter gradients
         optimizer.zero_grad()
 
         # forward + backward + optimize
         # print("input :" , inputs.shape)
-        outputs = model(inputs, holiday_inputs)
+        outputs = model(inputs, periodicity_inputs, train_arms[i])
 
         loss = criterion(outputs, values)
         loss.backward()
@@ -136,9 +144,9 @@ np_predicted = np.array([])
 with torch.no_grad():
     for j in range(test_xs.shape[0]):
         t_inputs = torch.from_numpy(test_xs[j]).float()
-        h_inputs = torch.from_numpy(test_xe[j]).float()
+        h_inputs = torch.from_numpy(test_xp[j]).float()
         t_values = torch.from_numpy(test_ys[j]).float()
-        predicted = model(t_inputs, h_inputs)
+        predicted = model(t_inputs, h_inputs, test_arms[j])
 
         np_values = np.append(np_values, t_values.numpy())
         np_predicted = np.append(np_predicted, predicted.numpy())
@@ -157,3 +165,12 @@ print("MAE:", v_mae)
 print("MAPE:", v_mape)
 # print(np_values.shape, np_predicted.shape)
 
+# with open('predicted.csv', 'w') as outfile:
+#     for data_slice in predict:
+#         outfile.write('# New slice\n')
+#         np.savetxt(outfile, data_slice)
+    
+# with open('real.csv', 'w') as outfile:
+#     for data_slice in y_true:
+#         outfile.write('# New slice\n')
+#         np.savetxt(outfile, data_slice)

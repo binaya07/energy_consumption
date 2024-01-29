@@ -664,7 +664,7 @@ class ResidualVisionTransformer(nn.Module):
 
     def forward(self, x):
         batch_size = x.size(0)
-        x = x.reshape(batch_size, 1, 12, 2)
+        x = x.reshape(batch_size, 1, 12, 10)
         x = self.forward_features(x)
         x = self.head(x)
 
@@ -741,7 +741,6 @@ class DeepFEC_v2_vehicle_config_model(nn.Module):
 #     # print("\n"*20)
 #     return msvit
 
-
 class DeepFEC_v2_vehicle_config_model_2(nn.Module):
 
     def __init__(self, in_chans=3,
@@ -758,17 +757,26 @@ class DeepFEC_v2_vehicle_config_model_2(nn.Module):
         self.engine_embed = nn.Embedding(63, 10)
         self.weight_embed = nn.Embedding(10, 5)
     
-        self.cat1 = nn.Linear(216, 50)
-        self.cat2 = nn.Linear(50, 1)
+        self.cat1 = nn.Linear(216, 1)
+        # self.cat2 = nn.Linear(50, 1)
 
-        self.holiday1 = nn.Linear(22, 5)
-        self.holiday2 = nn.Linear(5, 1)
-        self.drop = nn.Dropout(0.2)
+        # self.holiday1 = nn.Linear(22, 5)
+        # self.holiday2 = nn.Linear(5, 1)
+        
+        self.periodicity_fc1 = nn.Linear(7 * 2, 16)
+        self.periodicity_fc2 = nn.Linear(16, 1)
+        # self.periodicity_conv = nn.Conv2d(in_channels=2, out_channels=1, kernel_size=(1, 7))
+
+        # self.drop = nn.Dropout(0.2)
         self.out = nn.Linear(3, 1)
 
-    def forward(self, x, y):
+    def forward(self, x, y, arm):
         num_data = x[:,:,:2]
-        x1 = self.rvt(num_data)
+
+        # Retrieve and process data from adjacent road matrices
+        adj_road_data = self.process_adjacent_road_data(num_data, arm)
+
+        x1 = self.rvt(adj_road_data)
 
         input_veh_type = x[:, :, 2].int()        
         x2 = self.veh_type_embed(input_veh_type)
@@ -784,12 +792,41 @@ class DeepFEC_v2_vehicle_config_model_2(nn.Module):
 
         cat_data = torch.cat((x2, x3, x4), dim=-1)
         x5 = self.cat1(cat_data)
-        x7 = self.cat2(x5)
+        # x7 = self.cat2(x5)
 
-        x8 = self.holiday1(y)
-        x9 = self.holiday2(x8)
-        x10 = self.drop(x9)
-        all_data = torch.cat((x1, x7, x9), dim=-1)
+        # x8 = self.holiday1(y)
+        # x9 = self.holiday2(x8)
+
+        # Use dense layers for periodicity processing
+        x_periodicity = F.relu(self.periodicity_fc1(y.reshape(955, -1)))
+        x_periodicity = self.periodicity_fc2(x_periodicity)
+        # x10 = self.drop(x9)
+        # dense_periodicity_inputs = y.to_dense()
+        # dense_periodicity_inputs = dense_periodicity_inputs.permute(0, 3, 1, 2)
+        # x_periodicity = self.periodicity_conv(dense_periodicity_inputs).view(x.size(0), -1)
+        # x9 = self.periodicity_process(y.reshape(-1, 14))
+        # x10 = self.drop(all_data)
+        all_data = torch.cat((x1, x5, x_periodicity), dim=-1)
         x = self.out(all_data) 
         return x
+    
+    def process_adjacent_road_data(self, data, arm):
+        # Data is of size [955, 12, 2], arm is of shape (955, 5)
+        # Iterate over each road segment and concatenate adjacent road data
+        adj_road_data_list = []
+        for i in range(data.size(0)):
+            current_segment_data = data[i]  # Feature vector for the current road segment
+            # Retrieve indices of adjacent road segments for the current road segment
+            adjacent_indices = arm[i]
+            # print(adjacent_indices)
+            # Retrieve feature vectors of adjacent road segments based on indices
+            adjacent_road_data = data[adjacent_indices]
+            adjacent_road_data = adjacent_road_data.reshape(12, 10)
+            # print(adjacent_road_data.shape)
+            adj_road_data_list.append(adjacent_road_data)
+
+        # Stack the list of concatenated data to create the final tensor
+        adj_road_data = torch.stack(adj_road_data_list) 
+        # print(adj_road_data.shape) #(955, 12, 10)
+        return adj_road_data
     
